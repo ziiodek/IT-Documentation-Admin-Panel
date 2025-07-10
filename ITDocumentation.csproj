@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="wwwroot\DocumentsUploaded\singlePage\92\**" />
+    <Compile Remove="wwwroot\DocumentsUploaded\tmpsinglePage\**" />
+    <Content Remove="wwwroot\DocumentsUploaded\singlePage\92\**" />
+    <Content Remove="wwwroot\DocumentsUploaded\tmpsinglePage\**" />
+    <EmbeddedResource Remove="wwwroot\DocumentsUploaded\singlePage\92\**" />
+    <EmbeddedResource Remove="wwwroot\DocumentsUploaded\tmpsinglePage\**" />
+    <None Remove="wwwroot\DocumentsUploaded\singlePage\92\**" />
+    <None Remove="wwwroot\DocumentsUploaded\tmpsinglePage\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+	  <PackageReference Include="Microsoft.AspNet.WebApi.Cors" Version="5.2.9" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.2">
+	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	    <PrivateAssets>all</PrivateAssets>
+	  </PackageReference>
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.3" />
+	  <PackageReference Include="Microsoft.TestPlatform.TestHost" Version="17.5.0" />
+	  <PackageReference Include="Moq" Version="4.18.4" />
+	  <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.10" />
+    <PackageReference Include="Radzen.Blazor" Version="4.14.4" />
+    <PackageReference Include="System.DirectoryServices" Version="7.0.0" />
+    <PackageReference Include="xunit" Version="2.4.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\DocumentsUploaded\singlePage\177\" />
+    <Folder Include="wwwroot\DocumentsUploaded\tmp\" />
+    <Folder Include="wwwroot\DocumentsUploaded\singlePage\92\" />
+    <Folder Include="wwwroot\DocumentsUploaded\tmp\" />
+    <Folder Include="wwwroot\DocumentsUploaded\tmpsinglePage\" />
+  </ItemGroup>
+
+</Project>

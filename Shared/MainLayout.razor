@@ -1,0 +1,102 @@
+﻿@inherits LayoutComponentBase
+@using ITDocumentation.Data
+@using ITDocumentation.Pages
+@inject ProtectedSessionStorage ProtectedSessionStore
+
+
+<br>
+<br>
+<RadzenDialog />
+<RadzenNotification />
+<RadzenContextMenu />
+<RadzenTooltip />
+<CascadingValue Value="this">
+    <div class="container-fluid">
+        <UserHeader user="@user" />
+        <br>
+        <br>
+
+        @{
+            if (!isSignin)
+            {
+                <Authenticate setIsSignin__parentEvent="@set__isSignin"
+                        setUser__parentEvent="@setUser" />
+            }
+            else
+            {
+                <div class="page">
+                    <div>
+                        @AdminNav
+                    </div>
+                    <main>
+                        <article class="content px-4">
+                            <SearchResults SetShowSearchResults__ParentEvent="@SetShowsSearchResults"
+                                           showSearchResults="@showSearchResults" />
+                            <br>
+                            @{
+                                if(!showSearchResults){
+                                    @Body
+                            }
+                            }
+                           
+                        </article>
+                    </main>
+                </div>
+            }
+
+        }
+
+
+
+        <br>
+        <br>
+        <CustomFooter />
+    </div>
+</CascadingValue>
+
+
+@code {
+    User user = new User();
+    bool isSignin = false;
+    RenderFragment? AdminNav { get; set; }
+    bool showSearchResults = false;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        AdminNav = @<NavMenu user="@user" />;
+
+        var result = await ProtectedSessionStore.GetAsync<string>("user");
+        if (result.Success)
+        {
+            user.Name = result.Value!.ToString();
+            result = await ProtectedSessionStore.GetAsync<string>("department");
+            user.Department = result.Value!.ToString();
+            result = await ProtectedSessionStore.GetAsync<string>("role");
+            user.Role = result.Value!.ToString();
+            isSignin = true;
+        }
+
+    }
+
+    void set__isSignin(bool isSignin)
+    {
+        this.isSignin = isSignin;
+
+    }
+
+    void setUser(User user)
+    {
+        this.user = user;
+        AdminNav = @<NavMenu user="@user" />;
+
+    }
+
+    void SetShowsSearchResults(bool showSearchResults)
+    {
+        this.showSearchResults = showSearchResults;
+
+    }
+
+}

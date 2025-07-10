@@ -1,0 +1,73 @@
+@page "/users"
+
+@using ITDocumentation.Data
+@using Microsoft.EntityFrameworkCore
+@using System.Collections.Generic
+@inject ApplicationDbContext dbContext
+@inject ProtectedSessionStorage ProtectedSessionStore
+
+
+<WhiteContainer>
+    <TitleContainer content="@title" />
+    @{
+
+        if (state == "records")
+        {
+            <UsersTable userRoles="@userRoles"
+                        SetState__parentEvent="@SetState__event"
+                        departmentID="@departmentID"
+                        SetUserRole__parentEvent="@SetUserRole" />
+        }
+
+        if (state == "update")
+        {
+            <UserRoleForm setState__parentEvent="@SetState__event"
+                          userRole="@userRole"
+                          departmentID="@departmentID" />
+        }
+    }
+
+</WhiteContainer>
+
+
+@code {
+    string state = "records";
+    UserRole userRole = new UserRole();
+    int departmentID { get; set; }
+    IList<UserRole>? userRoles { get; set; }
+    string title = "Users";
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        Initializer testInit = new Initializer(dbContext);
+        testInit.initUsers("INFORMATION TECHNOLOGY");
+        var result = await ProtectedSessionStore.GetAsync<string>("department");
+        if (result.Success)
+        {
+            string departmentName = result.Value!.ToUpper();
+            if (dbContext.Department.Any(d => d.Name == departmentName))
+            {
+                Department department = dbContext.Department.First(p => p.Name == departmentName);
+                departmentID = department.ID;
+            }
+        }
+
+        userRoles = dbContext.UserRole.Where(u => u.DepartmentID == departmentID).ToList();
+
+    }
+
+    void SetState__event(string state)
+    {
+        this.state = state;
+
+    }
+
+    void SetUserRole(UserRole userRole)
+    {
+        this.userRole = userRole;
+    }
+
+}
+

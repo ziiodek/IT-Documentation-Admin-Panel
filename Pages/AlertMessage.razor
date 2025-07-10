@@ -1,0 +1,24 @@
+<div class="@alertType" role="alert">
+    @content
+    <span style="float:right;">
+        <RadzenIcon Icon="highlight_off" onclick="@HideAlert" />
+    </span>
+</div>
+
+@code {
+    [Parameter]
+    public string content { get; set; }
+    [Parameter]
+    public string alertType { get; set; }
+    [Parameter]
+    public EventCallback HideAlert__ParentEvent { get; set; }
+
+    void HideAlert()
+    {
+        HideAlert__ParentEvent.InvokeAsync();
+
+    }
+
+
+
+}

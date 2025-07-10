@@ -1,0 +1,101 @@
+@page "/menu"
+
+@using ITDocumentation.Data
+@using Microsoft.EntityFrameworkCore
+@using System.Collections.Generic
+@inject ApplicationDbContext dbContext
+
+
+<WhiteContainer>
+    <TitleContainer content="@title" />
+    <br>
+    <div class="row">
+        <div class="col-sm-6">
+            <div>
+                <h3>
+                    Menu Items
+                </h3>
+                <br>
+            </div>
+            <MenuItemsTable items="@items"
+                            reloadMenuItems__parentEvent="@reloadMenuItems"
+                            reloadPages__parentEvent="@initPages" />
+        </div>
+        <div class="col-sm-6">
+            <h3>
+                Add Pages to Main Menu
+            </h3>
+            <br>
+            <MenuPagesTable setPageID__parentEvent="@setPageID"
+                            showForm__parentEvent="@showForm"
+                            pages="@pages" />
+        </div>
+    </div>
+    <br>
+    <div style="width:100%;">
+        @{
+            if (form == true)
+            {
+                <MenuItemForm pageID="@pageID"
+                              showForm__parentEvent="@showForm"
+                              reloadMenuItems__parentEvent="@reloadMenuItems"
+                              reloadPages__parentEvent="initPages" />
+            }
+        }
+
+    </div>
+
+</WhiteContainer>
+@code {
+
+    bool form = false;
+    int pageID = 0;
+    List<MenuItem> items;
+    List<SinglePage> pages;
+    string title = "Edit Menu items";
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        items = dbContext.MenuItem.OrderBy(i => i.Name).ToList();
+        initPages();
+    
+
+    }
+
+
+    void initPages()
+    {
+        List<MenuItem> menuItems = dbContext.MenuItem.OrderBy(i => i.PageID).ToList();
+        List<SinglePage> tmpPages;
+        tmpPages = dbContext.SinglePage.OrderBy(p => p.Name).ToList();
+        pages = new List<SinglePage>();
+        foreach (var page in tmpPages)
+        {
+            if (page.Name != "About")
+            {
+                if (!dbContext.MenuItem.Any(i => i.PageID == page.ID))
+                {
+                    pages.Add(page);
+                }
+            }
+        }
+
+    }
+
+    void reloadMenuItems()
+    {
+        items = dbContext.MenuItem.OrderBy(i => i.Name).ToList();
+
+    }
+    void showForm(bool form)
+    {
+        this.form = form;
+    }
+
+    void setPageID(int pageID)
+    {
+        this.pageID = pageID;
+    }
+
+}

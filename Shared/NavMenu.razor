@@ -1,0 +1,135 @@
+﻿@using ITDocumentation.Data
+@using Microsoft.EntityFrameworkCore
+@using System.Collections.Generic
+@inject ApplicationDbContext dbContext
+@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager;
+
+
+
+<CascadingValue Value="this">
+    <div style="@menuIcon__display">
+        <RadzenIcon class="nav-link" style="font-size:35pt;" Icon="view_headline" @onclick="ShowMenu" />
+    </div>
+    <div class="menu" style="@mainMenu__display">
+        <RadzenIcon class="nav-link" style="font-size:25pt;" Icon="arrow_circle_left" @onclick="HideMenu" />
+        <nav class="flex-column">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/itdocs/">
+                    <RadzenIcon Icon="home" />&nbsp;&nbsp;Home
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="@departmentsUrl">
+                    <RadzenIcon Icon="book" />&nbsp;&nbsp;Departments
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/itdocs/downtime/">
+                    <RadzenIcon Icon="watch" />&nbsp;&nbsp;Down Time
+                </NavLink>
+            </div>
+
+            @{
+
+                foreach (var menuItem in menuItems!)
+                {
+                    if (menuItem.Name != "Core Values")
+                    {
+
+                        string pageLocation = "/itdocs/singlePages/view/" + menuItem.PageID;
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="#" style="line-height:1rem;">
+                                <RadzenButton Click=@(args => goToPage(menuItem.PageID)) Text="@menuItem.Name" style="background-color:transparent; color:black; font-size:8pt; box-shadow:none; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;" />
+                               
+                            </NavLink>
+                        </div>
+
+                    }
+
+                }
+
+
+            }
+
+
+            @{
+                if (isAdmin)
+                {
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="/itdocs/archive/">
+                            <RadzenIcon Icon="inventory" />&nbsp;&nbsp;Archive
+                        </NavLink>
+                    </div>
+                    <AdminMenu />
+                }
+            }
+
+
+
+
+
+
+
+
+        </nav>
+
+
+
+
+    </div>
+</CascadingValue>
+@code {
+    private bool collapseNavMenu = true;
+    bool isAdmin = false;
+    List<MenuItem>? menuItems;
+    [Parameter]
+    public User? user { get; set; }
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    string departmentsUrl = "";
+    string mainMenu__display = "display:block;";
+    string menuIcon__display = "display:none;";
+    //bool displayMenu = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (user!.Role == "ADMIN")
+        {
+            isAdmin = true;
+        }
+        string departmentName = user.Department!.ToUpper();
+        Console.WriteLine(departmentName);
+        Department department = dbContext.Department.First(p => p.Name == departmentName);
+        departmentsUrl = "/itdocs/departments/" + department.ID;
+        loadMenuItems();
+
+    }
+
+    void ShowMenu()
+    {
+        mainMenu__display = "display:block;";
+        menuIcon__display = "display:none;";
+    }
+
+    void HideMenu()
+    {
+        mainMenu__display = "display:none;";
+        menuIcon__display = "display:block;";
+    }
+
+    void loadMenuItems()
+    {
+        menuItems = dbContext.MenuItem.OrderBy(i => i.Name).ToList();
+
+    }
+
+    void goToPage(int pageID)
+    {
+
+        string url = "/itdocs/singlePages/view/" + pageID;
+        NavigationManager.NavigateTo(url, forceLoad: true);
+
+    }
+
+}

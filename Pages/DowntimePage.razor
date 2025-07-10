@@ -1,0 +1,123 @@
+@page "/downtime/"
+@using ITDocumentation.Data
+@using System.Collections.Generic
+@inject ApplicationDbContext dbContext
+@inject NavigationManager NavigationManager
+
+
+<WhiteContainer>
+    <TitleContainer content="@title" />
+    <br>
+    @{
+        if (showAlert == true)
+        {
+            <AlertMessage content="@alertMessage"
+                          alertType="@alertType" />
+
+
+        }
+
+
+    }
+
+
+
+    <DowntimeTable downtimeList="@downtimeList"
+                   SetState__parentEvent="@SetState"
+                   SetDowntime__parentEvent="@SetDowntime" />
+    <br>
+    <button class="btn btn-primary" data-bs-toggle="collapse" href="#collapseDowntime" role="button" aria-expanded="false" aria-controls="collapseDowntime">Add Entry</button>
+    <br>
+    <br>
+    <div class="collapse multi-collapse gray-container" id="collapseDowntime">
+        <h5>
+            Add New Down Time Entry
+        </h5>
+        <br>
+        <DowntimeForm downtime="@downtime"
+                      state="@state"
+                      downtimeList="@downtimeList"
+                      SetState__parentEvent="@SetState"
+                      SetDowntime__parentEvent="@SetDowntime"
+                      SetDowntimeList__parentEvent="@SetDowntimeList"
+                      SetAlertMessage__ParentEvent="@SetAlertMessage"
+                      SetAlertType__ParentEvent="@SetAlertType"
+                      ShowAlert__ParentEvent="@ShowAlert" />
+
+    </div>
+</WhiteContainer>
+
+
+@code {
+
+    string title = "Down Time";
+    string state = "create";
+    Downtime downtime;
+    List<Downtime> downtimeList;
+   
+
+    bool showAlert = false;
+    string alertMessage = "";
+    string alertType = "alert alert-primary";
+
+    protected override async Task OnInitializedAsync()
+    {
+        downtime = new Downtime();
+        downtimeList = dbContext.Downtime.ToList();
+
+    }
+
+    void SetState(string state)
+    {
+        this.state = state;
+    }
+
+    void SetDowntime(Downtime downtime)
+    {
+        this.downtime = downtime;
+    }
+
+    public void SetDowntimeList(List<Downtime> downtimeList)
+    {
+        this.downtimeList = downtimeList;
+
+    }
+
+
+    void ShowAlert(bool showAlert)
+
+    {
+        this.showAlert = showAlert;
+        HideAlert();
+
+    }
+
+    async Task HideAlert()
+    {
+
+        await Task.Delay(2000);
+        this.showAlert = false;
+
+
+    }
+
+
+
+    void SetAlertMessage(string alertMessage)
+    {
+        this.alertMessage = alertMessage;
+
+    }
+
+    void SetAlertType(string alertType)
+    {
+        this.alertType = alertType;
+
+
+    }
+
+}
+
+
+
+

@@ -1,0 +1,281 @@
+﻿@using System.Text.Json
+@using System.Text.Json.Nodes
+@using ITDocumentation.Classes
+@using ITDocumentation.Data
+@inject ApplicationDbContext dbContext
+
+<div class="row" style="text-align:right; width:50%;">
+        <div class="col-sm-1" >
+        <RadzenButton Icon="search" ButtonStyle="ButtonStyle.Primary" Click=@(args => Submit()) />
+        </div>
+    <div class="col-sm-8">
+        <RadzenTextBox @bind-Value=@searchString style="width:100%;" Change=@(args => Submit()) />
+
+    </div>
+    </div>
+
+@code {
+    string searchString = "";
+    JsonReader reader;
+    JsonNode contentTags;
+    JsonNode documentsTags;
+    [Parameter]
+    public EventCallback<List<KeyValuePair<int, string>>> SetDictionary__ParentEvent { get; set; }
+    [Parameter]
+    public EventCallback<List<SearchResult>> SetResults__ParentEvent { get; set; }
+    [Parameter]
+    public EventCallback<bool> SetShowSearchResults__ParentEvent { get; set; }
+    [Parameter]
+    public bool searchArchive { get; set; }
+    List<KeyValuePair<int, string>> tags;
+    List<SearchResult> results;
+    List<Document> documents = new List<Document>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        reader = new JsonReader();
+        tags = new List<KeyValuePair<int, string>>();
+        results = new List<SearchResult>();
+        GetContentTags();
+        //GetDocumentsTags();
+    }
+
+    void Submit()
+    {
+        results = new List<SearchResult>();
+        tags = new List<KeyValuePair<int, string>>();
+        if (searchString != "")
+        {
+
+            searchString = searchString.ToLower();
+            if (searchArchive != true)
+            {
+                ContentTagsToDictionary();
+                //DocumentsTagsToDictionary();
+                GetSearchResults();
+                //GetDocuments();
+
+            }
+            else
+            {
+                //DocumentsTagsToDictionary();
+                //GetDocuments();
+                ContentTagsToDictionary();
+                GetArchiveSearchResults();
+               
+            }
+
+
+            SetDictionary__ParentEvent.InvokeAsync(tags);
+            SetResults__ParentEvent.InvokeAsync(results);
+            SetShowSearchResults__ParentEvent.InvokeAsync(true);
+        }
+        else
+        {
+            SetShowSearchResults__ParentEvent.InvokeAsync(false);
+
+
+        }
+
+
+    }
+
+
+
+    void DocumentsTagsToDictionary()
+    {
+
+        foreach (KeyValuePair<string, JsonNode> node in (JsonObject)documentsTags)
+        {
+
+            JsonArray itemTags = node.Value.AsArray();
+            int ID = int.Parse(node.Key);
+            string type = "document";
+            foreach (var tag in itemTags)
+            {
+                string lowerCaseTag = tag.ToString().ToLower();
+                if (lowerCaseTag.Contains(searchString.ToLower(), StringComparison.OrdinalIgnoreCase))
+                {
+                    tags.Add(new KeyValuePair<int,string>(ID, type));
+
+
+                }
+
+            }
+
+
+        }
+
+    }
+
+    void ContentTagsToDictionary()
+    {
+
+        foreach (KeyValuePair<string, JsonNode> node in (JsonObject)contentTags)
+        {
+
+            JsonArray itemTags = node.Value["Tags"].AsArray();
+
+            int ID = int.Parse(node.Key);
+            string type = node.Value["Type"].ToString();
+            foreach (var tag in itemTags)
+            {
+
+                string lowerCaseTag = tag.ToString().ToLower();
+                if (lowerCaseTag.Contains(searchString.ToLower(), StringComparison.OrdinalIgnoreCase))
+                {
+                    tags.Add(new KeyValuePair<int, string>(ID, type));
+
+                }
+
+            }
+
+
+        }
+
+    }
+    void GetContentTags()
+    {
+
+        contentTags = reader.getTags("ContentTags.json");
+    }
+
+    void GetDocumentsTags()
+    {
+
+        documentsTags = reader.getTags("ContentTags.json");
+
+    }
+    void GetArchiveSearchResults()
+    {
+        foreach (KeyValuePair<int, string> tag in tags)
+        {
+            string itemName = "";
+            if (tag.Value == "projectPage")
+            {
+                if (dbContext.Project.Any(p => p.ID == tag.Key))
+                {
+
+                    itemName = dbContext.ProjectPage.First(p => p.ID == tag.Key).Name.ToString();
+
+                }
+
+            }
+            else
+            {
+                if (dbContext.SinglePage.Any(p => p.ID == tag.Key))
+                {
+
+                    itemName = dbContext.SinglePage.First(p => p.ID == tag.Key).Name.ToString();
+
+                }
+
+
+            }
+
+            if (itemName != "")
+            {
+                SearchResult result = new SearchResult();
+                result.ID = tag.Key;
+                result.Type = tag.Value;
+                result.Name = itemName;
+                results.Add(result);
+
+                List<Document> documents = dbContext.Document.Where(d => d.PageID == result.ID && d.Parent == result.Type && d.IsArchive == true).ToList();
+                foreach (var document in documents)
+                {
+                    SearchResult resultDocument = new SearchResult();
+                    resultDocument.ID = document.ID;
+                    resultDocument.Type = "document";
+                    resultDocument.Name = document.Name;
+                    results.Add(resultDocument);
+
+                }
+
+
+
+
+
+            }
+
+        }
+
+
+
+    }
+
+    void GetDocuments()
+    {
+        foreach (SearchResult result in results)
+        {
+            Console.WriteLine(result.Type);
+            Document document = dbContext.Document.First(d => d.PageID == result.ID && d.Parent == result.Type);
+            SearchResult resultDocument = new SearchResult();
+            result.ID = document.ID;
+            result.Type = "document";
+            result.Name = document.Name;
+            results.Add(result);
+        }
+
+
+    }
+
+    void GetSearchResults()
+    {
+
+
+        foreach (KeyValuePair<int, string> tag in tags)
+        {
+            string itemName = "";
+            if (tag.Value == "projectPage")
+            {
+                if (dbContext.Project.Any(p => p.ID == tag.Key))
+                {
+
+                    itemName = dbContext.ProjectPage.First(p => p.ID == tag.Key).Name.ToString();
+
+                }
+
+            }else
+            {
+                if (dbContext.SinglePage.Any(p => p.ID == tag.Key))
+                {
+
+                    itemName = dbContext.SinglePage.First(p => p.ID == tag.Key).Name.ToString();
+
+                }
+
+
+            }
+
+            if (itemName != "")
+            {
+                SearchResult result = new SearchResult();
+                result.ID = tag.Key;
+                result.Type = tag.Value;
+                result.Name = itemName;
+                results.Add(result);
+
+                List<Document> documents = dbContext.Document.Where(d => d.PageID == result.ID && d.Parent == result.Type).ToList();
+                foreach (var document in documents)
+                {
+                    SearchResult resultDocument = new SearchResult();
+                    resultDocument.ID = document.ID;
+                    resultDocument.Type = "document";
+                    resultDocument.Name = document.Name;
+                    results.Add(resultDocument);
+
+                }
+              
+
+                
+
+
+            }
+
+        }
+       
+
+    }
+
+}

@@ -1,0 +1,194 @@
+﻿@using ITDocumentation.Classes
+@using ITDocumentation.Data
+@inject ApplicationDbContext dbContext
+@inject NavigationManager _navigationManager
+@using System.Text.Json.Nodes
+@inject IJSRuntime JS
+
+
+<RadzenDataGrid 
+                AllowPaging="true"
+                PageSize="5"
+                AllowSorting="true"
+                Data="@results"
+                TItem="SearchResult">
+
+    <Columns>
+        <RadzenDataGridColumn TItem="SearchResult" Property="SearchResult.Name" Title="Name" Width="100%">
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="SearchResult" Property="SearchResult.Type" Title="Content Type" Width="100%">
+            <Template Context="searchResult">
+                @{
+                    if (searchResult.Type == "singlePage")
+                    {
+                        <span>Page</span>
+                    }
+                    else
+                    {
+                        <span>@searchResult.Type</span>
+                    }
+                }
+
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="SearchResult" Title="Tags" Width="100%">
+            <Template Context="searchResult">
+                @{
+                    if (searchResult.Type == "document")
+                    {
+                        string documentsTags = getDocumentTags(searchResult.ID);
+                        <span>@documentsTags</span>
+                    }
+                    else
+                    {
+
+                       string contentTags =  getContentTags(searchResult.ID, searchResult.Type);
+                        <span>@contentTags</span>
+                    
+                    }
+                }
+
+            </Template>
+        </RadzenDataGridColumn>
+
+
+        <RadzenDataGridColumn TItem="SearchResult" Context="searchResult" TextAlign="TextAlign.Right" Width="156px">
+            <Template Context="searchResult">
+                @{
+                    
+                    if (searchResult.Type == "document")
+                    {
+                        <RadzenButton Icon="file_download" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => DownloadRow(searchResult))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+
+                    }
+                    else
+                    {
+                        <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => ViewRow(searchResult))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    
+                    }
+
+                }
+
+             
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+
+</RadzenDataGrid>
+
+<script suppress-error="BL9992">
+    window.triggerFileDownload = (fileName, url) => {
+        const anchorElement = document.createElement('a');
+        anchorElement.href = url;
+        anchorElement.download = fileName ?? '';
+        anchorElement.click();
+        anchorElement.remove();
+    }
+</script>
+
+
+@code {
+    [Parameter]
+    public List<SearchResult>? results { get; set; }
+    TagsHelper tag = new TagsHelper();
+    JsonReader reader = new JsonReader();
+
+    void ViewRow(SearchResult searchResult)
+    {
+        string url = "#";
+        if (searchResult.Type == "projects")
+        {
+            url = "/projects/" + searchResult.ID.ToString();
+
+        }
+        else if (searchResult.Type == "document")
+        {
+
+
+
+        }
+        else
+        {
+            url = "/singlePages/view/"+searchResult.ID.ToString();
+
+        }
+        _navigationManager.NavigateTo(url, forceLoad: true);
+
+    }
+
+    string getDocumentTags(int documentID)
+    {
+        Document document = dbContext.Document.First(d => d.ID == documentID);
+
+        string tagString = "";
+        JsonNode contentTags = reader.getTags("ContentTags.json");
+        JsonObject jsonObj = contentTags.AsObject();
+        JsonNode itemTags = contentTags[document.PageID.ToString()]!;
+
+        if (jsonObj.ContainsKey(document.PageID.ToString()))
+        {
+            if (itemTags["Type"].ToString() == document.Parent)
+            {
+
+                foreach (var tagName in contentTags[document.PageID.ToString()]["Tags"].AsArray())
+                {
+
+                    tagString += tagName.ToString() + ",";
+                }
+
+            }
+
+
+        }
+
+        return tagString;
+    }
+
+    string getContentTags(int ID, string type)
+    {
+
+        string tagString = "";
+        JsonNode contentTags = reader.getTags("ContentTags.json");
+        JsonObject jsonObj = contentTags.AsObject();
+        JsonNode itemTags = contentTags[ID.ToString()]!;
+
+        if (jsonObj.ContainsKey(ID.ToString()))
+        {
+            if (itemTags["Type"].ToString() == type)
+            {
+
+                foreach (var tagName in contentTags[ID.ToString()]["Tags"].AsArray())
+                {
+
+                    tagString += tagName.ToString() + ",";
+                }
+
+            }
+
+
+        }
+
+        return tagString;
+
+    }
+
+    async Task DownloadRow(SearchResult result)
+    {
+        if (dbContext.Document.Any(d => d.ID == result.ID))
+        {
+            Document document = dbContext.Document.FirstOrDefault(d => d.ID == result.ID);
+            string directory = "/DocumentsUploaded/" + document.Parent + "/" + document.PageID;
+            var fileName = document.Name;
+            var fileURL = directory + "/" + fileName;
+            await JS.InvokeVoidAsync("triggerFileDownload", fileName, fileURL);
+        
+        }
+
+        
+
+    }
+   
+
+}

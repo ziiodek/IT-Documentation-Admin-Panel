@@ -1,0 +1,128 @@
+@inject IJSRuntime JS
+@inject DialogService DialogService
+
+
+<RadzenHtmlEditor @bind-Value=@value Name="Content" style="height: 500px; min-width:800px; max-width:1500px; overflow-y:scroll;" Change=@OnChange Paste=@OnPaste>
+    <RadzenHtmlEditorUndo />
+    <RadzenHtmlEditorRedo />
+    <RadzenHtmlEditorSeparator />
+    <RadzenHtmlEditorBold />
+    <RadzenHtmlEditorItalic />
+    <RadzenHtmlEditorUnderline />
+    <RadzenHtmlEditorStrikeThrough />
+    <RadzenHtmlEditorSeparator />
+    <RadzenHtmlEditorColor />
+    <RadzenHtmlEditorBackground />
+    <RadzenHtmlEditorFormatBlock />
+    <RadzenHtmlEditorAlignLeft />
+    <RadzenHtmlEditorAlignCenter />
+    <RadzenHtmlEditorAlignRight />
+    <RadzenHtmlEditorJustify />
+    <RadzenHtmlEditorIndent />
+    <RadzenHtmlEditorOutdent />
+    <RadzenHtmlEditorUnorderedList />
+    <RadzenHtmlEditorOrderedList />
+    <RadzenHtmlEditorRemoveFormat />
+    <RadzenHtmlEditorLink />
+    <RadzenHtmlEditorUnlink />
+    <RadzenHtmlEditorSubscript />
+    <RadzenHtmlEditorSuperscript />
+    <RadzenHtmlEditorFontName />
+    <RadzenHtmlEditorFontSize />
+    <RadzenHtmlEditorSource />
+    <RadzenButton Variant="Variant.Flat" Text='Insert Table' Icon="table_chart" Style="text-align:center;" ButtonStyle="ButtonStyle.Light" Click=@CreateTableDialog />
+    <RadzenUpload Multiple="false" Accept="image/*" Url="@uploadImageUrl" Icon="image" Disabled="true" Progress=@(args => OnProgress(args, "Multiple files upload")) />
+</RadzenHtmlEditor>
+<RadzenRequiredValidator Component="Content" Text="Page Content should not be empty" Popup="true" Style="position: absolute" />
+
+@code
+{
+    [Parameter]
+    public SinglePage singlePage { get; set; }
+    [Parameter]
+    public ProjectPage projectPage { get; set; }
+    [Parameter]
+    public string type { get; set; }
+    public string value { get; set; }
+    string uploadImageUrl;
+    string parent = "";
+    int pageID;
+
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (type == "singlePage")
+        {
+            value = singlePage.PageContent;
+        }
+        else if (type == "projectPage")
+        {
+            value = projectPage.PageContent;
+        }
+
+        if (type == "projectPage")
+        {
+            parent = "project";
+            pageID = projectPage.ID;
+        }
+        else
+        {
+            parent = type!;
+            pageID = singlePage.ID;
+        }
+
+        uploadImageUrl = "upload/image/" + parent + "/" + pageID;
+
+
+    }
+
+    void updateValue(string value)
+    {
+        this.value += value;
+    }
+    void OnPaste(HtmlEditorPasteEventArgs args)
+    {
+        //IMPLEMENT ON PASTE EVENT
+    }
+
+    void OnChange(string html)
+    {
+        if (type == "singlePage")
+        {
+            singlePage.PageContent = @html;
+        }
+        else if (type == "projectPage")
+        {
+            projectPage.PageContent = @html;
+
+        }
+
+
+    }
+
+
+
+    async Task OnProgress(UploadProgressArgs args, string name)
+    {
+        foreach (var file in args.Files)
+        {
+
+            string imgPath = "ImagesUploaded/" + parent + "/" + pageID + "/ver-" + DateTime.Today.ToString("yyyy-MM-dd") + "-" + file.Name;
+            value = value + "<br><img src='" + imgPath + "' style='width:400px;'/><br>";
+        }
+
+    }
+
+
+    async Task CreateTableDialog()
+    {
+        var result = await DialogService.OpenAsync("Inser Table", ds =>
+        @<CreateTableForm updateValue__parentEvent="@updateValue"
+                 ds="@ds" />);
+
+    }
+
+}

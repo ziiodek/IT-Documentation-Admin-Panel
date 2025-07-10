@@ -1,0 +1,56 @@
+@using ITDocumentation.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext dbContext
+@page "/content/{subdepartmentID:int}"
+
+
+<WhiteContainer>
+    <TitleContainer content="@title" />
+    <p>
+        @((MarkupString)about)
+    </p>
+    <br>
+    <br>
+    <div class="row">
+        <div class="col-sm-6">
+            <LinkCard style="width:100%;"
+                      content="Pages"
+                      link="@singlePages" />
+        </div>
+        <div class="col-sm-6">
+            <LinkCard style="width:100%;"
+                      content="Projects"
+                      link="@projects" />
+        </div>
+    </div>
+</WhiteContainer>
+@code {
+    string title = "";
+    string singlePages = "";
+    string projects = "";
+    string about = "";
+    [Parameter]
+    public int subdepartmentID { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        singlePages = "singlePages/" + subdepartmentID;
+        projects = "projects/" + subdepartmentID;
+
+        if (dbContext.Subdepartment.Any(s => s.ID == subdepartmentID))
+        {
+            Subdepartment subdepartment = dbContext.Subdepartment.First(s => s.ID == subdepartmentID);
+            title = subdepartment.Name!;
+        }
+
+        if (dbContext.SinglePage.Any(s => s.SubdepartmentID == subdepartmentID && s.Name == "About"))
+        {
+            SinglePage aboutContent = dbContext.SinglePage.First(s => s.SubdepartmentID == subdepartmentID && s.Name == "About");
+            about = aboutContent.PageContent!;
+        }
+
+
+    }
+
+}
